@@ -11,15 +11,7 @@ global check_cm
 global check_key
 
 def copy_transitions_states(states, append_state):
-    for state in states:
-        # new_state = f'{append_state}_{state}'
-        # transition_table[new_state] = {}
-        if state in transition_table:
-            for input_char, next_state in transition_table[state].items():
-                transition_table[new_state][input_char] = f'{append_state}_{next_state}'
-        # else:
-        #     transition_table[new_state][state] = f'{append_state}_{state}'
-        # TODO: colocar na tabela de outputs o NUMBER
+    return
 
 states = [], # Lista de estados
 
@@ -95,7 +87,7 @@ for number in numbers:
 for letter in letters:
     transition_table['number_treatment'][letter] = 'id_treatment'
 
-for simbol in simbols: #TO DO
+for simbol in simbols: 
     transition_table['number_treatment'][simbol] = f'TODO_{simbol}_accepted'
 
 copy_transitions_states(simbols, 'number_treament')
@@ -217,6 +209,10 @@ symbol_to_word = {
 
 
 def populate_output_table(transition_table):
+    # Adicionar todos os estados na output_table com valor de string vazia
+    for state in transition_table.keys():
+        output_table[state] = ''
+    
     for state, transitions in transition_table.items():
         for input_char, next_state in transitions.items():
             if next_state.endswith('_accepted'):
@@ -248,63 +244,69 @@ moore = Moore(
               )
 
 def main():
-    # pprint(transition_table['start'])
-    pprint(transition_table)
-    # pprint(output_table(';_accepted'))
-    # global check_cm
-    # global check_key
-    # global check_file 
+    DEBUG = False
 
-    # check_cm = False
-    # check_key = False
-    # check_file = False
+    if DEBUG == True:
+        for state, transitions in transition_table.items():
+            print(f"State: {state}")
+            for input_char, next_state in transitions.items():
+                print(f"  On input '{input_char}' -> {next_state}")
 
-    # idx_cm = 0
+    if DEBUG == False:
+        global check_cm
+        global check_key
+        global check_file 
 
-    # padrao_cm = r"[\w\W]*.cm$" #arquivo com fim cm
-    # padrao_not_cm = r"[\w\W]*\.[\w]+$" #arquivo not cm != arquivo com fim not cm
-    
-    # for idx, arg in enumerate(sys.argv[1:]):
-    #     # print("Argument #{} is {}".format(idx, arg))
-    #     # aux = arg.split('.')
-    #     # if aux[-1] == 'cm':
-    #     #     check_cm = True
-    #     #     idx_cm = idx
+        check_cm = False
+        check_key = False
+        check_file = False
 
-    #     # if(arg == "-k"):
-    #     #     check_key = True
-    #     if re.match (padrao_not_cm, arg):
-    #         check_file = True
-    #         idx_cm = idx + 1
+        idx_cm = 0
 
-    #         if re.match (padrao_cm, arg):
-    #             check_cm = True
-
-    #     if arg == "-k":
-    #         check_key = True
-    
-    # #print ("No. of arguments passed is ", len(sys.argv))
-    # # print('check_file', check_file)
-    # # print('check_cm', check_cm)
-    # if not check_file:
-    #     raise TypeError(error_handler.newError(check_key, 'ERR-LEX-USE'))
-    # if not check_cm:
-    #     raise IOError(error_handler.newError(check_key, 'ERR-LEX-NOT-CM'))
-    # elif not os.path.exists(sys.argv[idx_cm]):
-    #     raise IOError(error_handler.newError(check_key, 'ERR-LEX-FILE-NOT-EXISTS'))
-    # else:
-    #     data = open(sys.argv[idx_cm])
-
-    #     source_file = data.read()
-
-    #     if not check_key:
-    #         print("Definição da Máquina")
-    #         print(moore)
-    #         print("Entrada:")
-    #         print(source_file)
-    #         print("Lista de Tokens:")
+        padrao_cm = r"[\w\W]*.cm$" #arquivo com fim cm
+        padrao_not_cm = r"[\w\W]*\.[\w]+$" #arquivo not cm != arquivo com fim not cm
         
-    #     print(moore.get_output_from_string(source_file))
+        for idx, arg in enumerate(sys.argv[1:]):
+            # print("Argument #{} is {}".format(idx, arg))
+            # aux = arg.split('.')
+            # if aux[-1] == 'cm':
+            #     check_cm = True
+            #     idx_cm = idx
+
+            # if(arg == "-k"):
+            #     check_key = True
+            if re.match (padrao_not_cm, arg):
+                check_file = True
+                idx_cm = idx + 1
+
+                if re.match (padrao_cm, arg):
+                    check_cm = True
+
+            if arg == "-k":
+                check_key = True
+        
+        #print ("No. of arguments passed is ", len(sys.argv))
+        # print('check_file', check_file)
+        # print('check_cm', check_cm)
+        if not check_file:
+            raise TypeError(error_handler.newError(check_key, 'ERR-LEX-USE'))
+        if not check_cm:
+            raise IOError(error_handler.newError(check_key, 'ERR-LEX-NOT-CM'))
+        elif not os.path.exists(sys.argv[idx_cm]):
+            raise IOError(error_handler.newError(check_key, 'ERR-LEX-FILE-NOT-EXISTS'))
+        else:
+            data = open(sys.argv[idx_cm])
+
+            source_file = data.read()
+
+            if not check_key:
+                print("Definição da Máquina")
+                print(moore)
+                print("Entrada:")
+                print(source_file)
+                print("Lista de Tokens:")
+            
+            print(moore.get_output_from_string(source_file))
 
 
 if __name__ == "__main__":
