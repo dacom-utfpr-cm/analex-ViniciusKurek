@@ -9,11 +9,8 @@ error_handler = MyError('LexerErrors')
 
 global check_cm
 global check_key
-
-def copy_transitions_states(states, append_state):
-    return
-
-states = [], # Lista de estados
+    
+states = [], # Lista de todos estados do autômato
 
 capital_letter = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ]  # Letras maiúsculas
 
@@ -53,16 +50,14 @@ reserved_letters = [ 'i', 'e', 'f', 'r', 'v', 'w' ]  # Letras iniciais de palavr
 non_reserved_letters = []
 non_reserved_letters.extend(capital_letter)
 non_reserved_letters.extend(lowercase_letter)
-non_reserved_letters = list(set(non_reserved_letters) - set(reserved_letters))
 
 transition_table = {
-                        'start' : {},
-                        'i_reserved' : {
-                            'f' : 'if_if',
-                            'n' : 'int_in',
-                        },
-                        'if_if' : {
-                        },
+    'start': {},
+    'i_reserved': {
+        'f': 'if_if',
+        'n': 'int_in',
+    },
+    'if_if': {},
 }
 
 #start
@@ -88,9 +83,7 @@ for letter in letters:
     transition_table['number_treatment'][letter] = 'id_treatment'
 
 for simbol in simbols: 
-    transition_table['number_treatment'][simbol] = f'TODO_{simbol}_accepted'
-
-copy_transitions_states(simbols, 'number_treament')
+    transition_table['number_treatment'][simbol] = f'{simbol}_accepted'
 
 #copia transição e estados de simbolos e muda a saída deles 
 
@@ -149,10 +142,6 @@ for char in set(input_alphabet) - set(delimiter_characters):
 for char in alfanumericals:
     if char not in ['n', 'f']:  # Excluindo 'n' e 'f' HARDCODED CUIDADO !!!!!!!
         transition_table['i_reserved'][char] = 'intermediary_id'
-
-def copy_transitions(new_state, existing_state):
-    if existing_state in transition_table:
-        transition_table[new_state] = transition_table[existing_state].copy()
 
 output_table = {}
 
@@ -234,6 +223,14 @@ def populate_states(transition_table):
 
 populate_states(transition_table)
 
+def copy_transitions_states(group, root_state, leaf_state):
+    for char in group:
+        if char in transition_table[root_state]:
+            transition_table[leaf_state][char] = transition_table[root_state][char]
+            # print(f"Key: {char}, Value: {transition_table[initial_state][char]}")
+
+copy_transitions_states(simbols, 'start', 'number_treatment')
+
 moore = Moore(
                 states,
                 input_alphabet,
@@ -244,15 +241,16 @@ moore = Moore(
               )
 
 def main():
-    DEBUG = False
+    DEBUG = 1
 
-    if DEBUG == True:
-        for state, transitions in transition_table.items():
-            print(f"State: {state}")
-            for input_char, next_state in transitions.items():
-                print(f"  On input '{input_char}' -> {next_state}")
+    if DEBUG == 1:
+        # for state, transitions in transition_table.items():
+        #     print(f"State: {state}")
+        #     for input_char, next_state in transitions.items():
+        #         print(f"  On input '{input_char}' -> {next_state}")
+        pprint(transition_table['number_treatment'])
 
-    if DEBUG == False:
+    if DEBUG == 0:
         global check_cm
         global check_key
         global check_file 
