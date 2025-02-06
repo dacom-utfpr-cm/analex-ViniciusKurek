@@ -9,8 +9,8 @@ error_handler = MyError('LexerErrors')
 
 global check_cm
 global check_key
-    
-states = [], # Lista de todos estados do autômato
+
+states = []
 
 capital_letter = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ]  # Letras maiúsculas
 
@@ -35,15 +35,17 @@ input_alphabet = [
 input_alphabet.extend(alfanumericals)
 input_alphabet.extend(simbols)
 
-output_alphabet =   [
-                        'IF', 'ELSE', 'INT', 'FLOAT', 'RETURN', 'VOID', 'WHILE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'LESS', 'LESS_EQUAL',
-                        'GREATER', 'GREATER_EQUAL', 'EQUALS', 'DIFFERENT', 'LPAREN', 'RPAREN' , 'LBRACKETS', 'RBRACKETS',
-                        'LBRACES', 'RBRACES', 'ATTRIBUTION', 'SEMICOLON', 'COMMA'
-                    ], # Lista de outputs possíveis
+# output_alphabet =   [
+#                         'IF', 'ELSE', 'INT', 'FLOAT', 'RETURN', 'VOID', 'WHILE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'LESS', 'LESS_EQUAL',
+#                         'GREATER', 'GREATER_EQUAL', 'EQUALS', 'DIFFERENT', 'LPAREN', 'RPAREN' , 'LBRACKETS', 'RBRACKETS',
+#                         'LBRACES', 'RBRACES', 'ATTRIBUTION', 'SEMICOLON', 'COMMA', 'NUMBER', 'ID', 'SPACE', 'NOTHING', '\n'
+#                     ], # Lista de outputs possíveis
 
+output_alphabet = [] # Eu olhei no código da máquina e só é necessário o alfabeto de output para a conversão de Mealy para Moore
+ 
 initial_state = 'start' # Estado inicial  
 
-delimiter_characters = [ ' ', '/n', '/t'] # Caracteres utilizados para verificar o fim de uma palavra
+delimiter_characters = [ ' ', '\n', '/t', ''] # Caracteres utilizados para verificar o fim de uma palavra
 
 reserved_letters = [ 'i', 'e', 'f', 'r', 'v', 'w' ]  # Letras iniciais de palavras reservadas
 
@@ -53,110 +55,158 @@ non_reserved_letters.extend(lowercase_letter)
 
 transition_table = {
     'start': {},
-    'i_reserved': {
-        'f': 'if_if',
-        'n': 'int_in',
-    },
-    'if_if': {},
 }
 
 #start
+def start_treatment():
+    try:
+        delimiter_characters_treatment()
+        letter_treatment()
+        number_treatment()
+        simbols_treatment()
+    except Exception as e:
+        print(f"Erro em start_treatment: {e}")
 
 #tratamento de letras
 
-for letter in non_reserved_letters:
-    transition_table['start'][letter] = 'id_treatment'
+def letter_treatment():
+    reserved_letter_treatment()
+    non_reserved_letter_treatment()
 
-for letter in reserved_letters:
-    transition_table['start'][letter] = f'{letter}_reserved'
+def non_reserved_letter_treatment():
+    for letter in non_reserved_letters:
+        transition_table['start'][letter] = 'id_treatment'
+        if 'id_treatment' not in transition_table:
+            transition_table['id_treatment'] = {}
+
+def reserved_letter_treatment():
+    for letter in reserved_letters:
+        transition_table['start'][letter] = f'{letter}_reserved'
+        if f'{letter}_reserved' not in transition_table:
+            transition_table[f'{letter}_reserved'] = {}
+    if_treatment()
+    int_treatment()
+    else_treatment()
+    return_treatment()
+    void_treatment()
+    while_treatment()
+
+def if_treatment():
+    return
+
+def int_treatment():
+    return
+
+def else_treatment():
+    return
+
+def return_treatment():
+    return
+
+def void_treatment():
+    return
+
+def while_treatment():
+    return
 
 #
 
 #tratamento de números
-transition_table['number_treatment'] = {}
+def number_treatment():
+    transition_table['number_treatment'] = {}
+    transition_table['number_accepted'] = {}
 
-for number in numbers:
-    transition_table['start'][number] = 'number_treatment'
-    transition_table['number_treatment'][number] = 'number_treatment'
+    output_table['number_accepted'] = {}
+    output_table['number_accepted'] = 'NUMBER' 
 
-for letter in letters:
-    transition_table['number_treatment'][letter] = 'id_treatment'
+    # Loop para tratamento de números
+    for number in numbers:
+        transition_table['start'][number] = 'number_treatment'
+        transition_table['number_treatment'][number] = 'number_treatment'
 
-for simbol in simbols: 
-    transition_table['number_treatment'][simbol] = f'{simbol}_accepted'
+    # Tratamento de letras após um número
+    for letter in letters:
+        transition_table['number_treatment'][letter] = 'id_treatment'
 
-#copia transição e estados de simbolos e muda a saída deles 
+    # Tratamento de símbolos após um número
+    for simbol in simbols:
+        transition_table['number_treatment'][simbol] = f'number_{simbol}_accepted'
+        if f'number_{simbol}_accepted' not in transition_table:
+            transition_table[f'number_{simbol}_accepted'] = {}
+        if f'number_{simbol}_accepted' not in output_table:
+            output_table[f'number_{simbol}_accepted'] = {}
+            output_table[f'number_{simbol}_accepted'] = 'NUMBER'
 
+    # Número aceito
+    for char in delimiter_characters:
+        transition_table['number_treatment'][char] = 'number_accepted'
+
+    copy_transitions('start', 'number_accepted')
 #
 
 #tratamento dos símbolos
-for simbol in simbols:
+def simbols_treatment():
+    for simbol in simbols:
 
-    if simbol not in ['!', '<', '>', '=']:  # Excluindo '!', '<', '>', '=' HARDCODED CUIDADO !!!!!!!
-        transition_table['start'][simbol] = f'{simbol}_accepted'
+        if simbol not in ['!', '<', '>', '=']:  # Excluindo '!', '<', '>', '=' HARDCODED CUIDADO !!!!!!!
+            transition_table['start'][simbol] = f'{simbol}_accepted'
 
-    if simbol == '!':
-        transition_table['different_treatment'] = {}
-        transition_table['start'][simbol] = 'different_treatment'
-        transition_table['different_treatment']['='] = 'different_accepted'
+        if simbol == '!':
+            transition_table['different_treatment'] = {}
+            transition_table['start'][simbol] = 'different_treatment'
+            transition_table['different_treatment']['='] = 'different_accepted'
 
-    if simbol == '<':
-        transition_table['less_treatment'] = {}
-        transition_table['start'][simbol] = 'less_treatment'
-        transition_table['less_treatment']['='] = 'less_equal_accepted'
-        for char in delimiter_characters:
-            transition_table['less_treatment'][char] = 'less_accepted'
+        if simbol == '<':
+            transition_table['less_treatment'] = {}
+            transition_table['start'][simbol] = 'less_treatment'
+            transition_table['less_treatment']['='] = 'less_equal_accepted'
+            for char in delimiter_characters:
+                transition_table['less_treatment'][char] = 'less_accepted'
 
-    if simbol == '>':
-        transition_table['greater_treatment'] = {}
-        transition_table['start'][simbol] = 'greater_treatment'
-        transition_table['greater_treatment']['='] = 'greater_equal_accepted'
-        for char in delimiter_characters:
-            transition_table['greater_treatment'][char] = 'greater_accepted'
+        if simbol == '>':
+            transition_table['greater_treatment'] = {}
+            transition_table['start'][simbol] = 'greater_treatment'
+            transition_table['greater_treatment']['='] = 'greater_equal_accepted'
+            for char in delimiter_characters:
+                transition_table['greater_treatment'][char] = 'greater_accepted'
 
-    if simbol == '=':
-        transition_table['equal_treatment'] = {}
-        transition_table['start'][simbol] = 'equal_treatment'
-        transition_table['equal_treatment']['='] = 'equals_accepted'
-        for char in delimiter_characters:
-            transition_table['equal_treatment'][char] = 'attribution_accepted'
-
+        if simbol == '=':
+            transition_table['equal_treatment'] = {}
+            transition_table['start'][simbol] = 'equal_treatment'
+            transition_table['equal_treatment']['='] = 'equals_accepted'
+            for char in delimiter_characters:
+                transition_table['equal_treatment'][char] = 'attribution_accepted'
+ 
 #
 
+def delimiter_characters_treatment():
+    for char in delimiter_characters:
+        transition_table['start'][char] = 'start'
 
-teste  = []
+
 # tratamento de id
-
-for char in input_alphabet:
-    if char not in delimiter_characters:
-        if char not in alfanumericals:
-            teste.append(char)
+def id_treatment():
+    return
 #   
 
-for char in delimiter_characters:
-    transition_table['if_if'][char] = 'if_accepted'
+def i_treatment():
+    for char in alfanumericals:
+        if char not in ['n', 'f']:  # Excluindo 'n' e 'f' HARDCODED !!!
+            transition_table['i_reserved'][char] = 'intermediary_id'
 
-for char in set(input_alphabet) - set(delimiter_characters):
-    transition_table['if_if'][char] = 'intermediary_id'
+        # int_treatment
+        if char == 'n':
+            transition_table['i_reserved'][char] = 'int_in'
+            if 'int_in' not in transition_table:
+                transition_table['int_in'] = {}
 
-for char in alfanumericals:
-    if char not in ['n', 'f']:  # Excluindo 'n' e 'f' HARDCODED CUIDADO !!!!!!!
-        transition_table['i_reserved'][char] = 'intermediary_id'
+        # if_treatment
+        if char == 'f':
+            transition_table['i_reserved'][char] = 'if_if'
+            if 'if_if' not in transition_table:
+                transition_table['if_if'] = {}
 
 output_table = {}
-
-def update_output_table_with_states(transition_table, output_table):
-    unique_states = set()
-    for state in transition_table:
-        unique_states.add(state)
-        for next_state in transition_table[state].values():
-            unique_states.add(next_state)
-    
-    for state in unique_states:
-        if state not in output_table:
-            output_table[state] = ''
-
-update_output_table_with_states(transition_table, output_table)
 
 output_table = {
     '(_accepted': 'LPAREN',
@@ -198,59 +248,78 @@ symbol_to_word = {
 
 
 def populate_output_table(transition_table):
-    # Adicionar todos os estados na output_table com valor de string vazia
     for state in transition_table.keys():
         output_table[state] = ''
     
-    for state, transitions in transition_table.items():
-        for input_char, next_state in transitions.items():
-            if next_state.endswith('_accepted'):
-                output_key = next_state
-                symbol = next_state.split('_')[0]
-                output_value = symbol_to_word.get(symbol, symbol.upper())
-                output_table[output_key] = output_value
+    output_table['number_accepted'] = 'NUMBER' 
 
-populate_output_table(transition_table)
 
 def populate_states(transition_table):
-    global states
-    states = set()
-    for state in transition_table:
-        states.add(state)
-        for next_state in transition_table[state].values():
-            states.add(next_state)
-    states = list(states)
+    for state in transition_table.keys():
+        states.append(state)
 
-populate_states(transition_table)
+def copy_transitions(from_state, to_state):
+    for entrada, saida in transition_table[from_state].items():
+        transition_table[to_state][entrada] = saida
 
-def copy_transitions_states(group, root_state, leaf_state):
-    for char in group:
-        if char in transition_table[root_state]:
-            transition_table[leaf_state][char] = transition_table[root_state][char]
-            # print(f"Key: {char}, Value: {transition_table[initial_state][char]}")
+# def copy_transitions_and_states(group, root_state, leaf_state, new_state_prefix):
+#     for char in group:
+#         if char in transition_table[root_state]:
+#             original_state = transition_table[root_state][char]
+#             new_state = f'{new_state_prefix}_{original_state}'
+            
+#             # Cria o novo estado na transition_table se não existir
+#             if new_state not in transition_table:
+#                 transition_table[new_state] = {}
+                
+#                 # Copia as transições do estado original para o novo estado
+#                 if original_state in transition_table:
+#                     for input_char, next_state in transition_table[original_state].items():
+#                         transition_table[new_state][input_char] = next_state
+            
+#             # Adiciona o novo estado na output_table se não existir
+#             # if new_state not in output_table:
+#             #     output_table[new_state] = 'teste'
+            
+#             # Adiciona a transição do leaf_state para o next_state
+#             transition_table.setdefault(leaf_state, {})
+#             transition_table[leaf_state][char] = new_state
 
-copy_transitions_states(simbols, 'start', 'number_treatment')
+#number_treatment simbol copy
+#as que não são _accepted, ainda há de serem tratadas
 
-moore = Moore(
-                states,
-                input_alphabet,
-                output_alphabet,
-                transition_table, #lista de transições
-                initial_state, #estado inicial
-                output_table #tabela de saída
-              )
+# copy_transitions_and_states(simbols, 'start', 'number_treatment', 'number')
+
+
+
 
 def main():
-    DEBUG = 1
 
-    if DEBUG == 1:
+    start_treatment()
+    populate_states(transition_table)
+    populate_output_table(transition_table)
+
+    # pprint(output_table['number_accepted'])
+
+    moore = Moore(
+                    states,
+                    input_alphabet,
+                    output_alphabet,
+                    transition_table, #lista de transições
+                    initial_state, #estado inicial
+                    output_table #tabela de saída
+                )
+
+    DEBUG = False
+
+    if DEBUG == True:
         # for state, transitions in transition_table.items():
         #     print(f"State: {state}")
         #     for input_char, next_state in transitions.items():
-        #         print(f"  On input '{input_char}' -> {next_state}")
-        pprint(transition_table['number_treatment'])
+        #         print(f"  On input '{input_char}' -> {next_state}")   
+        return
 
-    if DEBUG == 0:
+    if DEBUG == False:
         global check_cm
         global check_key
         global check_file 
@@ -298,11 +367,11 @@ def main():
             source_file = data.read()
 
             if not check_key:
-                print("Definição da Máquina")
-                print(moore)
+                #print("Definição da Máquina")
+                # print(moore)
+                # print("Entrada:")
+                # print(source_file)
                 print("Entrada:")
-                print(source_file)
-                print("Lista de Tokens:")
             
             print(moore.get_output_from_string(source_file))
 
@@ -312,6 +381,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(e)
-    except (ValueError, TypeError):
         print(e)
