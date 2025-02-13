@@ -1,0 +1,31 @@
+def get_output_from_string(self, string):
+        """Return Moore Machine's output when a given string is given as input"""
+        temp_list = list(string) + ['']
+        DEBUG = False
+        tokens = []
+        current_state = self.initial_state
+
+        #???????
+        initial_token = self.output_table.get(current_state, '')
+        if initial_token:
+            tokens.append(initial_token)
+        #???????
+        if DEBUG:
+            ipdb.set_trace()
+        for x in temp_list:
+            if DEBUG:
+                print(x)
+            current_state = self.transitions[current_state][x]
+            if DEBUG:
+                print('current_state:', current_state)
+            token = self.output_table.get(current_state, '')
+            if DEBUG:
+                print('token:', token)
+            if token: 
+                tokens.append(token)
+            if DEBUG:
+                print('tokens:', tokens)
+                print('-----------------')
+        
+        # Junta os tokens com uma quebra de linha e retorna]
+        return "\n".join(tokens)
