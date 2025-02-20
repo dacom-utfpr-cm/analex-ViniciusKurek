@@ -104,13 +104,7 @@ def create_output(name, output):
     output_table[name] = output
 
 def join_output(name, first_output, second_output):
-    try:
-        output_table[name] = f'{output_table[first_output]}\n{output_table[second_output]}'
-    except:
-        print('join_output ERROR')
-        print('name:', name)
-        print('first_output:', first_output)
-        print('second_output:', second_output)
+    output_table[name] = f'{output_table[first_output]}\n{output_table[second_output]}'
 
 def copy_transition(to_state, from_state='start', exception=None):
     if exception is None:
